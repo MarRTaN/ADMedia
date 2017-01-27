@@ -7,6 +7,7 @@ use Request;
 use App\Http\Requests;
 
 use App\movie;
+use App\audio;
 
 class MovieController extends Controller
 {
@@ -18,6 +19,7 @@ class MovieController extends Controller
 
     public function delete($id){
     	$del = Movie::where('id','=',$id)->delete();
+        $delau = Audio::where('movie_id','=',$id)->delete();
     	return redirect('/movie');
     }
 

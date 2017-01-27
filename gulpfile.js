@@ -36,4 +36,5 @@ elixir(mix => {
     //   .webpack('app.js');
 
     mix.sass('fileupload.scss', 'public/css/fileupload.css');
+    mix.sass('player.scss', 'public/css/player.css');
 });

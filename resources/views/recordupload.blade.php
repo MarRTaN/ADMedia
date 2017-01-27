@@ -13,6 +13,10 @@
 </head>
 
 <body>
+    <div style="width: 300px; height: 50px; background:red;">
+        <div style="width: 10px; height: 100%; background: green;"></div>
+        <div style="width: 10px; height: 100%; margin-left: 50%; background: green;"></div>
+    </div>
     <article>
         <form action="/upload-record" method="post" enctype="multipart/form-data">
             Select image to upload:
@@ -20,20 +24,22 @@
             <input type="hidden" name="audioUrl" id="fileToUpload">
             <input type="submit" value="Upload Image" name="submit">
         </form>
+        <button onclick="uploadAudio();">Upload</button>
 
         <section class="recordrtcc">
             <h2 class="header">
                 <button class="record-btn" id="record-btn" onclick="clickToRecord(this);">Start Recording</button>
             </h2>
 
-            <div style="text-align: center; display: none;">
+            <!--div style="text-align: center; display: none;">
                 <button id="save-to-disk">Save To Disk</button>
                 <button id="open-new-tab">Open New Tab</button>
-            </div>
+            </div-->
 
             <br>
 
-            <video controls muted></video>
+            <video controls muted style="display:none;"></video>
+            <audio src="" id="sample"></audio>
         </section>
 
         <div id="error" style="width:100%;height:100%;">
@@ -128,7 +134,7 @@
                                     button.recordingEndedCallback(url);
                                     stopStream();
 
-                                    saveToDiskOrOpenNewTab(button.recordRTC[0]);
+                                    //saveToDiskOrOpenNewTab(button.recordRTC[0]);
                                     return;
                                 }
 
@@ -144,7 +150,7 @@
                                 button.recordingEndedCallback(url);
                                 stopStream();
 
-                                saveToDiskOrOpenNewTab(button.recordRTC);
+                                //saveToDiskOrOpenNewTab(button.recordRTC);
                             });
                         }
                     }
@@ -205,11 +211,12 @@
                     button.recordRTC = RecordRTC(button.stream, options);
 
                     button.recordingEndedCallback = function(url) {
-                        var audio = new Audio();
+                        //var audio = new Audio();
+                        var audio = document.getElementById('sample');
                         audio.src = url;
                         audio.controls = true;
-                        recordingPlayer.parentNode.appendChild(document.createElement('hr'));
-                        recordingPlayer.parentNode.appendChild(audio);
+                        //recordingPlayer.parentNode.appendChild(document.createElement('hr'));
+                        //recordingPlayer.parentNode.appendChild(audio);
 
                         if(audio.paused) audio.play();
                         audioBlob = button.recordRTC.blob;

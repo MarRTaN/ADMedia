@@ -19,7 +19,7 @@ class UploadController extends Controller
 
     public function uploadRecord(){
         //$target_dir = dirname(__DIR__) . "/Upload/";
-        $target_dir = "/Users/MarRTaN/Documents/Work/ADofThailand/app2/public/upload/";
+        $target_dir = $_SERVER['DOCUMENT_ROOT']."/upload/";
         $message = 'Error uploading file';
         switch( $_FILES['file']['error'] ) {
             case UPLOAD_ERR_OK:
@@ -45,15 +45,18 @@ class UploadController extends Controller
             } else {
                 // Let's see if we can move the file...
                 $t = time();
-                $dest = $target_dir . "a".$t."ud" . ".ogg";
+                $uploadname = "a".$t."ud" . ".ogg";
+                $dest = $target_dir . $uploadname;
                 if( !move_uploaded_file($_FILES['file']['tmp_name'], $dest) ) { // No error supporession so we can see the underlying error.
                     $message = 'Error uploading file - could not save upload (this will probably be a permissions problem in '.$dest.')';
                 } else {
                     $message = 'File uploaded okay.';
+                    return $uploadname;
                 }
             }
         }
-        return $message;
+
+        return 'Error:'.$message;
         //if(isset($_FILES['file']) and !$_FILES['file']['error']){
             //$fname = "11" . ".ogg";
             //move_uploaded_file($_FILES['file']['tmp_name'], $target_dir.$fname);

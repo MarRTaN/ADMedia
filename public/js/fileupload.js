@@ -8,32 +8,62 @@ var editMode = false;
 
 $(document).ready(function(){
 	setTimeFieldAction();
-	rearrangeAudioData();
-	genAudios();
-    $('#update_name').keyup(function(){
-    	checkUpdateFill()
-    });
-    $('#update_path').keyup(function(){
-    	checkUpdateFill()
-    });
-    $('#update_start').keyup(function(){
-    	checkUpdateFill()
-    });
-    $('#update_end').keyup(function(){
-    	checkUpdateFill()
-    });
-    $('#audio_name').keyup(function(){
-    	checkUploadFill()
-    });
-    $('#audio_attachment').keyup(function(){
-    	checkUploadFill()
-    });
+	if(type !== 'movie') {
+		rearrangeAudioData();
+		genAudios();
+
+	    $('#update_name').keyup(function(){
+	    	checkUpdateFill()
+	    });
+	    $('#update_path').keyup(function(){
+	    	checkUpdateFill()
+	    });
+	    $('#update_start').keyup(function(){
+	    	checkUpdateFill()
+	    });
+	    $('#update_end').keyup(function(){
+	    	checkUpdateFill()
+	    });
+	    $('#audio_name').keyup(function(){
+	    	checkUploadFill()
+	    });
+	    $('#audio_attachment').keyup(function(){
+	    	checkUploadFill()
+	    });
+	    $('#audio_method').change(function(){
+	    	console.log($(this).val());
+	    	var val = $(this).val();
+	    	if(val !== "none"){
+	    		$('#upload-part').show();
+	    		if(val == "link"){
+	    			$('#audio_file_cover').show();
+	    			$('#audio_record').hide();
+	    			$('#upload-btn').show();
+	    		} else {
+	    			$('#audio_file_cover').hide();
+	    			$('#audio_record').show();
+	    			if(webrtcDetectedBrowser === 'chrome') {
+	    				$('#upload-btn').hide();
+	    			}
+	    		}
+	    	} else {
+	    		$('#upload-part').hide();
+	    	}
+	    });
+	    document.getElementById('audio_method').value = "none";
+	
+	}
 });
 
 function deleteRecord(movie_id,id){
 	$('.popup').fadeIn(10);
 	deleteId = id;
 	deleteMovieId = movie_id;
+}
+
+function deleteRecord(id){
+	$('.popup').fadeIn(10);
+	deleteId = id;
 }
 
 function confirmDelete(){
@@ -78,7 +108,7 @@ function updateMovie(id,name,file){
 	editMode = true;
 }
 
-function updateAudio(movie_id,id,name,file,start,end){
+function updateAudio(movie_id,id,name,file_type,file,start,end){
 	$('#update_movie_id').val(movie_id);
 	$('#update_id').val(id);
 	$('#update_name').val(name);
@@ -110,9 +140,10 @@ function confirmUpdateAudio(){
 	var astart = $('#update_start').val();
 	var aend = $('#update_end').val();
 
+	console.log(aid);
+	console.log()
 	var isOverlap = checkOverlap(astart,aend,aid);
-	console.log(isOverlap);
-	console.log("hihihi");
+
 	if(!isOverlap){
 	    popOut();
 		$.ajax({
@@ -160,38 +191,92 @@ function uploadAudio(){
 	if($('#upload-btn').attr('disabled') !== 'disabled'){
 		var amovie_id = $('#movie_id').val();
 		var aname = $('#audio_name').val();
-		var afile = $('#audio_attachment').val();
 		var astart = $('#audio_start').val();
 		var aend = $('#audio_end').val();
+		var afile_type, afile;
 
 		if(astart == aend){
 			alert("Start and end time should not be equal");
 			return;
 		}
+
 		var isOverlap = checkOverlap(astart,aend,-100);
 		if(!isOverlap){
-			$.ajax({
-		        url: "/upload-audio",
-		        type:'GET',
-		        data:
-		        {
-		            movie_id: amovie_id,
-		            name: aname,
-		            path: afile,
-		            start: astart,
-		            end: aend
-		        },
-		        success: function(res)
-		        {	
-		           audioData = res;
-		           rearrangeAudioData();
-		           genAudios();
-		           setTimeout(displayAudioToTimeline, 100);
-		        }               
-		    });
+
+			var audio_method = $('#audio_method').val();
+			if(audio_method == "link") {
+
+				afile_type = 0;
+				afile = $('#audio_attachment').val();
+
+				$.ajax({
+			        url: "/upload-audio",
+			        type:'GET',
+			        data:
+			        {
+			            movie_id: amovie_id,
+			            name: aname,
+			            path: afile,
+			            file_type: afile_type,
+			            start: astart,
+			            end: aend
+			        },
+			        success: function(res)
+			        {	
+			           audioData = res;
+			           rearrangeAudioData();
+			           genAudios();
+			           setTimeout(displayAudioToTimeline, 100);
+			        }               
+			    });
+			}
+			else if(audio_method == "record") {
+
+				var audio_data = getFormData();
+
+	            $.ajax({
+	                url :  "/upload-record",
+	                type: 'POST',
+	                data: audio_data,
+	                contentType: false,
+	                processData: false,
+	                success: function(path) {
+	                    console.log("Success");
+						afile_type = 1;
+						afile = path;
+						$.ajax({
+					        url: "/upload-audio",
+					        type:'GET',
+					        data:
+					        {
+					            movie_id: amovie_id,
+					            name: aname,
+					            path: afile,
+					            file_type: afile_type,
+					            start: astart,
+					            end: aend
+					        },
+					        success: function(res)
+					        {	
+					           audioData = res;
+					           rearrangeAudioData();
+					           genAudios();
+					           setTimeout(displayAudioToTimeline, 100);
+					        }               
+					    });
+	                },    
+	                error: function(xhr, status, error) {
+	                	alert("Upload fail");
+	                    //console.log(xhr.responseText);
+	                    //document.getElementById('error').innerHTML = xhr.responseText;
+	                }
+	            });
+			}
+			else { alert("File type does not match"); return; }
 		} else {
 			alert("The time is overlap the other audios");
 		}
+		
 	}
 }
 
@@ -283,11 +368,19 @@ function isNumeric(n) {
 function checkUploadFill(){
 	var name = $('#audio_name').val();
 	var path = $('#audio_attachment').val();
-	console.log(name+","+path);
-	if(name == "" || path == ""){
-		$('#upload-btn').attr('disabled','disabled');
-	} else {
-		$('#upload-btn').removeAttr('disabled');
+	var method = $('#audio_method').val();
+	if(method == "link"){
+		if(name == "" || path == ""){
+			$('#upload-btn').attr('disabled','disabled');
+		} else {
+			$('#upload-btn').removeAttr('disabled');
+		}
+	} else if(method == "record"){
+		if($('#sample').attr('src') == "" || name == "") {
+			$('#upload-btn').attr('disabled','disabled');
+		} else {
+			$('#upload-btn').removeAttr('disabled');
+		}
 	}
 }
 
@@ -332,60 +425,27 @@ function setTimeFieldValue(){
 	$('#update-end-s').val(es);
 }
 
-function rearrangeAudioData(){
-	setAudioList();
-	for(a = 0; a < audioList.length - 1; a++){
-		i = 0;
-		for(j = 1; j < audioList.length; j++){
-			var iStart = audioList[i].start;
-			var jStart = audioList[j].start;
-			var temp;
-			if(iStart > jStart) {
-				temp = audioList[i];
-				audioList[i] = audioList[j];
-				audioList[j] = temp;
-			}
-			i++;
-		}
-	}
-}
-
-function genAudios(){
-	var tbody = document.getElementById('audioTbody');
-	var content = "";
-	var counter = 1;
-	var a = audioList;
-	for(i = 0; i < a.length; i++){
-	  	content += 				'<tr>';
-		content +=          	 '<td class="col-md-1 text-center">'+counter+'</td>';
-		content +=               '<td class="col-md-6">'+a[i].name+'</td>';
-		content +=               '<td class="col-md-1 text-center">'+a[i].start+'</td>';
-		content +=               '<td class="col-md-1 text-center">'+a[i].end+'</td>';
-		content +=               '<td class="col-md-3 text-center">';
-		content +=               	'<form id="del-'+a[i].id+'" action="/delete-audio/'+a[i].movie_id+'/'+a[i].id+'" method="GET"></form>';
-		content +=               	'<button class="btn btn-primary" onclick="updateAudio(\''+a[i].movie_id+'\',\''+a[i].id+'\',\''+a[i].name+'\',\''+a[i].file+'\',\''+a[i].start+'\',\''+a[i].end+'\');">EDIT</button>';        
-		content +=               	'<button class="btn btn-danger" onclick="deleteRecord(\''+a[i].movie_id+'\',\''+a[i].id+'\');">DELETE</button>';
-		content +=               '</td>';
-		content +=            	'</tr>';
-		counter++;
-	}
-	tbody.innerHTML = content;
-}
-
 function checkOverlap(s,e,id){
 	var a = audioList;
-	if(a.length > 0){
-		if(e <= a[0].start && id !== a[0].id) { console.log("c1"); return false; }
-		else if(s >= a[a.length-1].end && id !== a[a.length-1].id) { console.log("c2"); return false;}
-		for(i = 0; i < a.length - 1; i++){
-			//console.log("a["+i+"].id = " +a[i].id +", input = "+id+" , a["+i+"].end = "+a[i].end+" , a["+(i+1)+"].start = "+a[i+1].start);
+	if(a.length > 1){
+		if(e <= a[0].start && id !== a[0].id) { console.log("c1 : add to first (not self)"); return false; }
+		else if(s >= a[a.length-1].end && id !== a[a.length-1].id) { console.log("c2 : add to last (not self)"); return false;}
+		for(i = 0; i < a.length-1; i++){
 			if(id !== a[i].id){
-				if(s >= a[i].end && e <= a[i+1].start && id !== a[i].id) {console.log("c3"); return false; }
+				if(s >= a[i].end && e <= a[i+1].start && id !== a[i].id) {console.log("c3 : add between after first to before last (not self)"); return false; }
 			}
 		}
-		console.log("c5");
+		for(i = 0; i < a.length; i++){
+			if(id == a[i].id){
+				if(i == 0 && e <= a[i+1].start) {console.log("c6 : add itself to first"); return false; }
+				else if(i == a.length-1 && s >= a[i-1].end) {console.log("c6 : add itself to last"); return false; }
+				else if(s >= a[i-1].end && e <= a[i+1].start) {console.log("c7 : add itself between after & before it"); return false; }
+			}
+		}
+		console.log("c5 : overlap");
 		return true;
 	} else {
+		console.log("c8 : no audio or only 1 file");
 		return false;
 	}
 }

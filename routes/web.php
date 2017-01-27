@@ -29,3 +29,6 @@ Route::get('delete-audio', 'AudioController@delete');
 Route::get('recorder', 'UploadController@index');
 Route::post('upload-record', array('as' => 'upload-record', 
     'uses' => 'UploadController@uploadRecord'));
+
+Route::get('player/{id}', 'PlayerController@index');
+Route::get('player', 'PlayerController@playerList');

@@ -5,7 +5,7 @@ body {
   position: static !important;
   border-radius: 0px !important;
   border: 0px !important;
-  background: #f2f2f2 !important; }
+  background: #2a2a2a !important; }
 
 .well {
   top: 80px;
@@ -40,6 +40,8 @@ body {
     left: 50%;
     -webkit-transform: translateX(-50%);
     transform: translateX(-50%); }
+    .well .form-cover-audio #upload-part {
+      display: none; }
   .well .form-cover-movie {
     min-width: 40%;
     position: absolute;
@@ -67,7 +69,6 @@ h2 {
 
 .container {
   position: absolute;
-  top: 250px;
   left: 50%;
   -webkit-transform: translateX(-50%);
   transform: translateX(-50%); }
@@ -85,17 +86,26 @@ h2 {
     .container .show-all-field input[type=text] {
       display: none; }
 
+.movie-container {
+  top: 250px; }
+
 .cover {
-  position: absolute;
-  top: 81px;
   width: 100vw; }
   .cover .cover-left,
   .cover .cover-right {
-    height: 90vh;
+    height: 100vh;
     overflow: hidden; }
   .cover .cover-left {
-    background: #f2f2f2;
-    padding: 0; }
+    background: #2a2a2a;
+    padding: 0;
+    color: #e2e2e2; }
+    .cover .cover-left .audio-cover {
+      background: #222;
+      padding-left: 10px;
+      border-radius: 3px;
+      padding-right: 10px; }
+    .cover .cover-left audio {
+      width: 33vw; }
   .cover .cover-right {
     background: #eee;
     padding: 0 !important; }
@@ -141,7 +151,7 @@ h2 {
     display: block;
     overflow: auto;
     width: 100%;
-    height: 85vh; }
+    height: 100vh; }
 
 .blue-btn {
   color: white !important;
@@ -239,31 +249,45 @@ h2 {
 
 .timeline {
   height: 6vh;
-  background: white;
+  width: calc(100% - 6vh - 15%);
+  background: #343334;
   margin-left: 6vh; }
   .timeline .current-bar {
     height: 100%;
     width: 0%;
     opacity: 50%;
-    background: #4285f4; }
+    background: #c15320; }
   .timeline .audio-line-cover {
-    height: 100%;
-    width: 100%;
-    margin-top: -6vh; }
+    height: 6vh;
+    width: calc(100% - 6vh - 15%);
+    margin-top: -6vh;
+    position: absolute; }
     .timeline .audio-line-cover .audio-line {
-      background: blue;
+      background: #ffcd00;
       height: 100%;
       width: 10px;
       display: inline-block;
-      position: relative;
+      position: absolute;
       z-index: 0;
-      opacity: 0.7; }
+      opacity: 0.8; }
   .timeline .drag-area {
     height: 100%;
     width: 100%;
     margin-top: -6vh;
     z-index: 1000;
     position: relative; }
+
+.timer {
+  width: 15%;
+  height: 6vh;
+  margin-left: calc(100% - 15%);
+  background: black;
+  position: absolute;
+  margin-top: -6vh;
+  overflow: hidden;
+  text-align: center;
+  font-size: 1.2em;
+  padding: 0.5em; }
 
 .vid-button {
   width: 6vh;

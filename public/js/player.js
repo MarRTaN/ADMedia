@@ -1,11 +1,10 @@
-var interval = 0.2;
+var interval = 1;
 var isAdMuted = false;
 
 var audioList = [];
 var audioPlaying= false;
 
 var timer;
-var audPlayer;
 
 function stopAd(){
 	if(timer !== null) clearInterval(timer);
@@ -51,16 +50,30 @@ function playAd(){
 							audPlayer.playbackRate = audPlayer.duration / (curAud.end - curAud.start);
 							audPlayer.currentTime = audPlayer.playbackRate * (curVidTime - curAud.start);
 							audPlayer.play();
+
 						}
 					}
 					else {
 						audPlayer.pause();
-						audPlayer.src = curAud.file;
-						if(!isNaN(audPlayer.duration)){
+
+						var file_type = curAud.file_type;
+						if(file_type == 1)	audPlayer.src = upload_path + "/" + curAud.file;
+						else				audPlayer.src = curAud.file;
+
+
+						getduration(audPlayer.src, function(duration){
+							//console.log("Playing " + audPlayer.src + ", for: " + duration + "seconds.");
+							audPlayer.playbackRate = duration / (curAud.end - curAud.start);
+							audPlayer.currentTime = audPlayer.playbackRate * (curVidTime - curAud.start);
+						    audPlayer.play(); 
+						});
+
+						/*audPlayer.addEventListener('loadedmetadata', function() {
+						    console.log("Playing " + audPlayer.src + ", for: " + audPlayer.duration + "seconds.");
 							audPlayer.playbackRate = audPlayer.duration / (curAud.end - curAud.start);
 							audPlayer.currentTime = audPlayer.playbackRate * (curVidTime - curAud.start);
-							audPlayer.play();
-						}
+						    audPlayer.play(); 
+						});*/
 					}
 				}
 			}
@@ -102,7 +115,24 @@ function setAudioList(){
 	audioList = [];
 	index = 0;
 	jQuery.each(audioData, function() {
-		audioList[index] = {"movie_id": this["movie_id"], "id": this["id"], "name": this["name"], "file": this["file"], "start": this["start"], "end":this["end"]};
+		audioList[index] = {"movie_id": this["movie_id"], "id": this["id"], "name": this["name"], "file": this["file"], "file_type": this["file_type"], "start": this["start"], "end":this["end"]};
 		index++;
 	});
 }
+
+
+function getduration(url, next) {
+    var _player = new Audio(url);
+    _player.addEventListener("durationchange", function (e) {
+        if (this.duration!=Infinity) {
+           var duration = this.duration
+           _player.remove();
+           next(duration);
+        };
+    }, false);      
+    _player.load();
+    _player.currentTime = 24*60*60; //fake big time
+    _player.volume = 0;
+    _player.play();
+    //waiting...
+};

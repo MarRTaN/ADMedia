@@ -3,8 +3,16 @@
 @section('content')
 	<!--link rel="stylesheet" type="text/css"  href="{!! asset('css/video-js-5.12.6.css') !!}" />
 	<script src="{!! asset('js/video-5.12.6.js') !!}"></script-->
+    <script src="{!! asset('js/timeline.js') !!}"></script>
+    <script src="{!! asset('js/player.js') !!}"></script>
+	<script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/gif-recorder.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/getScreenId.js"></script>
+
+    <!-- for Edige/FF/Chrome/Opera/etc. getUserMedia support -->
+	<script src="https://cdn.webrtc-experiment.com/gumadapter.js"></script>
+
 	<meta name="csrf-token" content="{{ csrf_token() }}" />
-	<h2>Audio Upload for <b>{{ $movie->name }}</b></h2>
 	<div class="cover">
 		<div class="cover-left col-md-7">
 			<video id="my-video" class="video-js" preload="auto" data-setup="{}">
@@ -14,7 +22,7 @@
 			      <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
 			    </p>
 			</video>
-			<audio id="audioPlayer"></audio>
+			<audio id="audioPlayer" preload="metadata"></audio>
 			<div class="vid-button">
 				<div id="play-button">
 					<img src="{!! asset('elements/pause.svg') !!}">
@@ -28,37 +36,58 @@
 				<div class="audio-line-cover" id="audio-line-cover"></div>
 				<div class="drag-area"></div>
 			</div>
+			<div class="timer" id="timer">0:00 | 0:00</div>
 			<div class = "well well-audio">
 			   <div class="form-cover-audio">
 			   		<form id="upload-audio-form">
-				   	  	<div class="form-group hidden">
-				   	  		<input type="text" class="form-control" name="movie_id" id="movie_id" autocomplete="off" value="{{ $movie->id }}" hidden>
-					  	</div>
-				   	  	<div class="form-group">
-				        	<label for="audio_name">Audio Name</label><br>
-				   	  		<input type="text" class="form-control" name="name" id="audio_name" autocomplete="off">			        
-				      	</div>
-				      	<div class="form-group">
-				        	<label for="audio_attachment">Link File</label><br>
-				        	<input type="text" class="form-control input-file-text" name="path" id="audio_attachment">
-				      	</div>
-						<div class="form-group">
-							<label> Start time : </label><br>
-							<input type="number" min="0" class="time-input time-input-h form-control" id="start-h" max="4" value="0">:
-							<input type="number" min="0" class="time-input time-input-m form-control" id="start-m" max="59" value="0">:
-							<input type="number" min="0" class="time-input time-input-s form-control" id="start-s" max="59" value="0">
-							<input type="text" name="start" id="audio_start" value="0" hidden>
+			   			<div class="col-md-12">
+					   	  	<div class="form-group hidden">
+					   	  		<input type="text" class="form-control" name="movie_id" id="movie_id" autocomplete="off" value="{{ $movie->id }}" hidden>
+						  	</div>
+					      	<div class="form-group">
+					        	<label for="audio_attachment">Upload method</label><br>
+					        	<select class="form-control" name="method" id="audio_method" style="width:10vw">
+					        		<option value="none">(Please select)</option>
+					        		<option value="link">Link file</option>
+					        		<option value="record" id="record-option">Audio record</option>
+					        	</select>
+					      	</div>
+					   	  	<div class="form-group">
+					        	<label for="audio_name">Audio Name</label><br>
+					   	  		<input type="text" class="form-control" name="name" id="audio_name" autocomplete="off" style="width:12vw">			        
+					      	</div>
+							<div class="form-group">
+								<label> Start time : </label><br>
+								<input type="number" min="0" class="time-input time-input-h form-control" id="start-h" max="4" value="0">:
+								<input type="number" min="0" class="time-input time-input-m form-control" id="start-m" max="59" value="0">:
+								<input type="number" min="0" class="time-input time-input-s form-control" id="start-s" max="59" value="0">
+								<input type="text" name="start" id="audio_start" value="0" hidden>
+							</div>
+							<div class="form-group">
+								<label> End time : </label><br>
+								<input type="number" min="0" class="time-input time-input-h form-control" id="end-h" max="4" value="0">:
+								<input type="number" min="0" class="time-input time-input-m form-control" id="end-m" max="59" value="0">:
+								<input type="number" min="0" class="time-input time-input-s form-control" id="end-s" max="59" value="0">
+								<input type="text" name="end" id="audio_end" value="0" hidden>
+							</div>
 						</div>
-						<div class="form-group">
-							<label> End time : </label><br>
-							<input type="number" min="0" class="time-input time-input-h form-control" id="end-h" max="4" value="0">:
-							<input type="number" min="0" class="time-input time-input-m form-control" id="end-m" max="59" value="0">:
-							<input type="number" min="0" class="time-input time-input-s form-control" id="end-s" max="59" value="0">
-							<input type="text" name="end" id="audio_end" value="0" hidden>
-						</div>
-					    <div class="form-group">
-					    	<label class="label-hidden" for="audio_upload">Upload</label><br>
-						    <div onclick="uploadAudio();" id="upload-btn" class="btn btn-primary" disabled="disabled">Upload</div>
+						<div class="col-md-12" id="upload-part">
+					      	<div class="form-group" id="audio_file_cover">
+					        	<label for="audio_attachment">Link File</label><br>
+					        	<input type="text" class="form-control input-file-text" name="path" id="audio_attachment" style="width: 40vw;">
+					      	</div>
+					      	<div class="recordrtcc" id="audio_record">
+					      		<label for="audio_attachment">Audio Recorder</label><br>
+					            <div class="btn btn-success" id="record-btn" onclick="clickToRecord(this);">Start Recording</div>
+					            <video controls muted style="display:none;"></video>
+					            <div class="audio-cover">
+					            	<audio src="" id="sample"></audio>
+					            </div>
+					        </div>
+						    <div class="form-group">
+						    	<label class="label-hidden" for="audio_upload">Upload</label><br>
+							    <div onclick="uploadAudio();" id="upload-btn" class="btn btn-primary" disabled="disabled" style="position: absolute; right:1vw">Upload</div>
+							</div>
 						</div>
 					</form>
 			   </div>
@@ -66,14 +95,7 @@
 
 		</div>
 		<div class="cover-right col-md-5">
-
-			
-		<form action="/upload-record" method="post" enctype="multipart/form-data">
-		    Select image to upload:
-		    {{ csrf_field() }}
-		    <input type="file" name="file" id="fileToUpload">
-		    <input type="submit" value="Upload Image" name="submit">
-		</form>
+				<h2>Audio Upload for <b>{{ $movie->name }}</b></h2>
 				<!--<?php if(count($audios) > 0) { ?>
 				  <table class = "table table-bordered table-striped fixed-header audio-table" id="audio-list">
 				     <thead>
@@ -171,28 +193,282 @@
 		var leftWidth = $('.cover-left').width();
 		$('#my-video').attr('width',leftWidth);
 
-		//gets table
-		var oTable = document.getElementById('audio-list');
-		if(oTable !== null){
-			//gets rows of table
-			var rowLength = oTable.rows.length;
-
-			//loops through rows    
-			for (i = 0; i < rowLength; i++){
-
-			   //gets cells of current row
-			   var oCells = oTable.rows.item(i).cells;
-
-			   //gets amount of cells of current row
-			   var cellLength = oCells.length;
-
-			   //loops through each cell in current row
-			   for(var j = 0; j < cellLength; j++){
-			      /* get your cell info here */
-			      /* var cellVal = oCells.item(j).innerHTML; */
-			   }
-			}
-		}
-
 	</script>
+	<!-- for audio record -->
+	<script>
+            (function() {
+                var params = {},
+                    r = /([^&=]+)=?([^&]*)/g;
+
+                function d(s) {
+                    return decodeURIComponent(s.replace(/\+/g, ' '));
+                }
+
+                var match, search = window.location.search;
+                while (match = r.exec(search.substring(1))) {
+                    params[d(match[1])] = d(match[2]);
+
+                    if(d(match[2]) === 'true' || d(match[2]) === 'false') {
+                        params[d(match[1])] = d(match[2]) === 'true' ? true : false;
+                    }
+                }
+
+                window.params = params;
+            })();
+
+            function addStreamStopListener(stream, callback) {
+                var streamEndedEvent = 'ended';
+
+                if ('oninactive' in stream) {
+                    streamEndedEvent = 'inactive';
+                }
+
+                stream.addEventListener(streamEndedEvent, function() {
+                    callback();
+                    callback = function() {};
+                }, false);
+
+                stream.getAudioTracks().forEach(function(track) {
+                    track.addEventListener(streamEndedEvent, function() {
+                        callback();
+                        callback = function() {};
+                    }, false);
+                });
+
+                stream.getVideoTracks().forEach(function(track) {
+                    track.addEventListener(streamEndedEvent, function() {
+                        callback();
+                        callback = function() {};
+                    }, false);
+                });
+            }
+        </script>
+
+        <script>
+
+            var recordingDIV = document.querySelector('.recordrtcc');
+            var recordingPlayer = recordingDIV.querySelector('video');
+            var recordButton = document.getElementById('record-btn');
+            var isRecording = false;
+            var currentRecordUrl = "";
+            var audioBlob;
+
+            function clickToRecord(btn) {
+                var button = btn;
+
+                if(isRecording) {
+                    button.disabled = true;
+                    button.disableStateWaiting = true;
+                    setTimeout(function() {
+                        button.disabled = false;
+                        button.disableStateWaiting = false;
+                    }, 2 * 1000);
+
+                    function stopStream() {
+                        if(button.stream && button.stream.stop) {
+                            button.stream.stop();
+                            button.stream = null;
+                        }
+                    }
+
+                    if(button.recordRTC) {
+                        if(button.recordRTC.length) {
+                            button.recordRTC[0].stopRecording(function(url) {
+                                if(!button.recordRTC[1]) {
+                                    button.recordingEndedCallback(url);
+                                    stopStream();
+
+                                    //saveToDiskOrOpenNewTab(button.recordRTC[0]);
+                                    return;
+                                }
+
+                                button.recordRTC[1].stopRecording(function(url) {
+                                    button.recordingEndedCallback(url);
+                                    stopStream();
+                                });
+                            });
+                        }
+                        else {
+                            button.recordRTC.stopRecording(function(url) {
+                                button.recordingEndedCallback(url);
+                                stopStream();
+
+                                //saveToDiskOrOpenNewTab(button.recordRTC);
+                            });
+                        }
+                    }
+
+                    return;
+                }
+
+                button.disabled = true;
+
+                var commonConfig = {
+                    onMediaCaptured: function(stream) {
+                        button.stream = stream;
+                        if(button.mediaCapturedCallback) {
+                            button.mediaCapturedCallback();
+                        }
+                        changeRecordBtnStyle("start");
+                        isRecording = true;
+                        button.disabled = false;
+                    },
+                    onMediaStopped: function() {
+                        changeRecordBtnStyle("stop");
+                        isRecording = false;
+
+                        if(!button.disableStateWaiting) {
+                            button.disabled = false;
+                        }
+                    },
+                    onMediaCapturingFailed: function(error) {
+                        if(error.name === 'PermissionDeniedError' && !!navigator.mozGetUserMedia) {
+                            intallFirefoxScreenCapturingExtension();
+                        }
+
+                        commonConfig.onMediaStopped();
+                    }
+                };
+
+                var mimeType = 'video/webm';
+
+                captureAudio(commonConfig);
+
+                button.mediaCapturedCallback = function() {
+                    var options = {
+                        type: 'audio',
+                        mimeType: mimeType,
+                        bufferSize: typeof params.bufferSize == 'undefined' ? 0 : parseInt(params.bufferSize),
+                        sampleRate: typeof params.sampleRate == 'undefined' ? 44100 : parseInt(params.sampleRate),
+                        leftChannel: params.leftChannel || false,
+                        disableLogs: params.disableLogs || false,
+                        recorderType: webrtcDetectedBrowser === 'edge' ? StereoAudioRecorder : null
+                    };
+
+                    console.log(mimeType);
+
+                    if(typeof params.sampleRate == 'undefined') {
+                        delete options.sampleRate;
+                    }
+
+                    button.recordRTC = RecordRTC(button.stream, options);
+
+                    button.recordingEndedCallback = function(url) {
+                        //var audio = new Audio();
+                        var audio = document.getElementById('sample');
+                        audio.src = url;
+                        audio.controls = true;
+                        //recordingPlayer.parentNode.appendChild(document.createElement('hr'));
+                        //recordingPlayer.parentNode.appendChild(audio);
+
+                        if(audio.paused) audio.play();
+                        audioBlob = button.recordRTC.blob;
+
+                        audio.onended = function() {
+                            audio.pause();
+                            audio.src = URL.createObjectURL(button.recordRTC.blob);
+                            checkUploadFill();
+                        };
+                    };
+
+                    button.recordRTC.startRecording();
+                };
+            };
+
+            function captureAudio(config) {
+                captureUserMedia({audio: true}, function(audioStream) {
+                    recordingPlayer.srcObject = audioStream;
+                    recordingPlayer.play();
+
+                    config.onMediaCaptured(audioStream);
+
+                    addStreamStopListener(audioStream, function() {
+                        config.onMediaStopped();
+                    });
+                }, function(error) {
+                    config.onMediaCapturingFailed(error);
+                });
+            }
+
+            function captureUserMedia(mediaConstraints, successCallback, errorCallback) {
+                var isBlackBerry = !!(/BB10|BlackBerry/i.test(navigator.userAgent || ''));
+                if(isBlackBerry && !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia)) {
+                    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+                    navigator.getUserMedia(mediaConstraints, successCallback, errorCallback);
+                    return;
+                }
+
+                navigator.mediaDevices.getUserMedia(mediaConstraints).then(successCallback).catch(errorCallback);
+            }
+
+            if(webrtcDetectedBrowser === 'edge') {
+                // webp isn't supported in Microsoft Edge
+                // neither MediaRecorder API
+                // so lets disable both video/screen recording options
+            }
+
+            if(webrtcDetectedBrowser === 'firefox') {
+                // Firefox implemented both MediaRecorder API as well as WebAudio API
+                // Their MediaRecorder implementation supports both audio/video recording in single container format
+                // Remember, we can't currently pass bit-rates or frame-rates values over MediaRecorder API (their implementation lakes these features)
+            }
+
+            if(webrtcDetectedBrowser === 'chrome') {
+            	var elem = document.getElementById("audio_record");
+    			elem.innerHTML = "Audio record is not supported for Chrome. Please use Firefox browser to activate this function."
+            }
+
+            function saveToDiskOrOpenNewTab(recordRTC) {
+                recordingDIV.querySelector('#save-to-disk').parentNode.style.display = 'block';
+                recordingDIV.querySelector('#save-to-disk').onclick = function() {
+                    if(!recordRTC) return alert('No recording found.');
+
+                    recordRTC.save();
+                };
+
+                recordingDIV.querySelector('#open-new-tab').onclick = function() {
+                    if(!recordRTC) return alert('No recording found.');
+
+                    window.open(recordRTC.toURL());
+                };
+            }
+        </script>
+        <script type="text/javascript">
+          var upload_path = "{!! asset('upload') !!}";
+          function changeRecordBtnStyle(type){
+            var button = document.getElementById('record-btn');
+            if(type == 'start'){
+              button.innerHTML = "Stop";
+            } else if(type == 'stop'){
+              button.innerHTML = "Start";
+            }
+          }
+          /*function uploadRecord(){
+            var data = new FormData();
+            data.append('file', audioBlob);
+            data.append('_token', '{{ csrf_token() }}');
+
+            $.ajax({
+                url :  "/upload-record",
+                type: 'POST',
+                data: data,
+                contentType: false,
+                processData: false,
+                success: function(data) {
+                    console.log("Success");
+                    alert(data);
+                },    
+                error: function(xhr, status, error) {
+                    console.log(xhr.responseText);
+                    document.getElementById('error').innerHTML = xhr.responseText;
+                }
+            });
+          }*/
+          function getFormData(){
+			var data = new FormData();
+            data.append('file', audioBlob);
+            data.append('_token', '{{ csrf_token() }}');
+            return data;
+          }
+        </script>
 @stop

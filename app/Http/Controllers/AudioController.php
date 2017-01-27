@@ -59,6 +59,7 @@ class AudioController extends Controller
         $audio->movie_name = Movie::where('id','=',$movie_id)->first()->name;
         $audio->name = Request::query('name');
         $audio->file = Request::query('path');
+        $audio->file_type = Request::query('file_type');
         $audio->start = Request::query('start');
         $audio->end = Request::query('end');
         $audio->save();
@@ -75,6 +76,7 @@ class AudioController extends Controller
             $audio->movie_name = "Mov-".$i;
             $audio->name = "Aud-0".$i;
             $audio->file = "Path-0".$i;
+            $audio->file_type = 0;
             $audio->start = $i;
             $audio->end = $i+100;
             $audio->save();

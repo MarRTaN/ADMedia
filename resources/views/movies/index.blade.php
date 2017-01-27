@@ -22,8 +22,7 @@
 		   	</form>
 	    </div>
 	</div>
-	<div class="container">
-
+	<div class="container movie-container">
 	  <table class = "table table-bordered table-striped" style="background:#f5f5f5;">
 	     <thead>
 	        <tr>
@@ -83,5 +82,6 @@
 	</div>
 	<script type="text/javascript"> 
 		var type = 'movie'; 
+		var audioList = 0;
 	</script>
 @stop
